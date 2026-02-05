@@ -13,18 +13,18 @@ inline std::vector<std::string> GetLevel1() {
 	// 'S': Pared de acero
 	// ' ': Espacio vacío
 	return {
-		"B           B",  // 13
-		" X X X X X X ",  // 12
-		" X X X X X X ",  // 11
-		" X X XSX X X ",  // 10
-		" X X     X X ",  // 9
+		"B    XbX    B",  // 13
+		" X X XXX X X ",  // 12
+		" X X     X X ",  // 11
+		" X X X X X X ",  // 10
+		" X X XSX X X ",  // 9
 		"     X X     ",  // 8
 		"S XX     XX S",  // 7
 		"     X X     ",  // 6
-		" X X XXX X X ",  // 5
+		" X X XSX X X ",  // 5
 		" X X X X X X ",  // 4
 		" X X     X X ",  // 3
 		" X X XXX X X ",  // 2
-		"    AXbX     ",  // 1
+		"A    XbX    A",  // 1
 	};
 }

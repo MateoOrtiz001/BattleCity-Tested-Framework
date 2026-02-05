@@ -1,5 +1,10 @@
 #include "include/entities/Tank.h"
 
+int Tank::nextId = 0;
+
+Tank::Tank(int x, int y, char team) 
+    : x(x), y(y), spawnX(x), spawnY(y), team(team), direction(0), health(3), id(nextId++) {}
+
 int Tank::GetX() const {
     return x;
 }
@@ -14,6 +19,14 @@ int Tank::GetDirection() const {
 
 int Tank::GetHealth() const {
     return health;
+}
+
+int Tank::GetLives() const {
+    return lives;
+}
+
+char Tank::GetTeam() const {
+    return team;
 }
 
 int Tank::GetId() const {
@@ -37,7 +50,16 @@ void Tank::Respawn() {
 
 void Tank::TakeDamage(int damage) {
     health -= damage;
-    if (health < 0) {
-        health = 0;
+    if (health == 0){
+        lives--;
     }
+}   
+
+bool Tank::IsAlive() const {
+    return lives > 0;
+}
+
+void Tank::SetPosition(int newX, int newY) {
+    x = newX;
+    y = newY;
 }
