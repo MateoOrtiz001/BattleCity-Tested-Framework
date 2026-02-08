@@ -117,6 +117,52 @@ void GameState::TankShoot(Tank& tank) {
         case 3: bulletX--; break;
     }
     
+    // Verificar si la posición de spawn está fuera del mapa
+    if (!IsValidPosition(bulletX, bulletY)) {
+        return;
+    }
+    
+    // Colisión inmediata con paredes en la posición de spawn
+    for (auto& wall : walls) {
+        if (wall->GetX() == bulletX && wall->GetY() == bulletY) {
+            wall->TakeDamage(1);
+            return;
+        }
+    }
+    
+    // Colisión inmediata con tanques enemigos
+    for (auto& t : teamA_tanks) {
+        if (t.IsAlive() && t.GetX() == bulletX && t.GetY() == bulletY && tank.GetTeam() != 'A') {
+            t.TakeDamage(1);
+            if (t.GetHealth() == 0 && t.GetLives() > 0) {
+                t.Respawn();
+            }
+            score += 100;
+            return;
+        }
+    }
+    for (auto& t : teamB_tanks) {
+        if (t.IsAlive() && t.GetX() == bulletX && t.GetY() == bulletY && tank.GetTeam() != 'B') {
+            t.TakeDamage(1);
+            if (t.GetHealth() == 0 && t.GetLives() > 0) {
+                t.Respawn();
+            }
+            score += 100;
+            return;
+        }
+    }
+    
+    // Colisión inmediata con bases enemigas
+    if (baseA.GetX() == bulletX && baseA.GetY() == bulletY && tank.GetTeam() != 'A') {
+        baseA.TakeDamage(1, tank.GetTeam());
+        return;
+    }
+    if (baseB.GetX() == bulletX && baseB.GetY() == bulletY && tank.GetTeam() != 'B') {
+        baseB.TakeDamage(1, tank.GetTeam());
+        return;
+    }
+    
+    // Sin colisión inmediata, crear la bala normalmente
     bullets.emplace_back(bulletX, bulletY, tank.GetDirection(), tank.GetTeam());
 }
 
@@ -316,7 +362,15 @@ vector<Tank>& GameState::GetTeamATanks() { return teamA_tanks; }
 vector<Tank>& GameState::GetTeamBTanks() { return teamB_tanks; }
 vector<shared_ptr<Wall>>& GameState::GetWalls() { return walls; }
 vector<Bullet>& GameState::GetBullets() { return bullets; }
+const vector<Tank>& GameState::GetTeamATanks() const { return teamA_tanks; }
+const vector<Tank>& GameState::GetTeamBTanks() const { return teamB_tanks; }
+const vector<shared_ptr<Wall>>& GameState::GetWalls() const { return walls; }
+const vector<Bullet>& GameState::GetBullets() const { return bullets; }
 int GameState::GetBoardSize() const { return boardSize; }
 int GameState::GetScore() const { return score; }
 int GameState::GetActualFrame() const { return actualFrame; }
 char GameState::GetWinnerTeam() const { return winnerTeam; }
+
+const Base& GameState::GetBaseByTeam(char team) const {
+    return (team == 'A') ? baseA : baseB;
+}

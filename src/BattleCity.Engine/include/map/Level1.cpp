@@ -25,6 +25,6 @@ inline std::vector<std::string> GetLevel1() {
 		" X X X X X X ",  // 4
 		" X X     X X ",  // 3
 		" X X XXX X X ",  // 2
-		"A    XbX    A",  // 1
+		"A    XaX    A",  // 1
 	};
 }

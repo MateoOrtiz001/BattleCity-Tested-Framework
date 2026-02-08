@@ -1,4 +1,5 @@
-#include "math.h"
+#include "include/utils/Utils.h"
+#include <cmath>
 
 
 int ManhattanDistance(int x1, int y1, int x2, int y2) {

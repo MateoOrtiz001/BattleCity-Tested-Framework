@@ -38,10 +38,15 @@ class GameState {
         vector<Tank>& GetTeamBTanks();
         vector<shared_ptr<Wall>>& GetWalls();
         vector<Bullet>& GetBullets();
+        const vector<Tank>& GetTeamATanks() const;
+        const vector<Tank>& GetTeamBTanks() const;
+        const vector<shared_ptr<Wall>>& GetWalls() const;
+        const vector<Bullet>& GetBullets() const;
         int GetBoardSize() const;
         int GetScore() const;
         int GetActualFrame() const;
         char GetWinnerTeam() const;
+    const Base& GetBaseByTeam(char team) const;
 
     private:
         // Funciones internas
