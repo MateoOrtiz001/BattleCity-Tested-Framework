@@ -16,5 +16,5 @@ class Wall {
     private:
         int x, y; 
         bool destructible = true; 
-        int health = 1;
+        int health = 3;
 };
