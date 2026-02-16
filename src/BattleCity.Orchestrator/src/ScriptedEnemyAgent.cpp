@@ -7,11 +7,18 @@
 static const int DX[] = { 0, 1, 0, -1 };
 static const int DY[] = { 1, 0, -1, 0 };
 
-ScriptedEnemyAgent::ScriptedEnemyAgent(ScriptType type, unsigned int seed)
-    : scriptType(type)
+ScriptedEnemyAgent::ScriptedEnemyAgent(char team, ScriptType type, unsigned int seed)
+    : team(team)
+    , scriptType(type)
     , rng(seed) {}
-    // Nota: seed=0 es un valor válido y determinista.
-    // Para obtener una seed aleatoria, usar std::random_device{}() antes de pasar el valor.
+
+char ScriptedEnemyAgent::GetTeam() const {
+    return team;
+}
+
+const std::vector<Tank>& ScriptedEnemyAgent::GetMyTanks(const GameState& state) const {
+    return (team == 'A') ? state.GetTeamATanks() : state.GetTeamBTanks();
+}
 
 Action ScriptedEnemyAgent::Decide(const GameState& state, int tankId) {
     switch (scriptType) {
@@ -22,15 +29,16 @@ Action ScriptedEnemyAgent::Decide(const GameState& state, int tankId) {
 }
 
 Action ScriptedEnemyAgent::AttackBase(const GameState& state, int tankId) {
-    // Buscar el tanque por ID
+    // Buscar el tanque por ID en el equipo de este agente
     const Tank* tank = nullptr;
-    for (const auto& t : state.GetTeamBTanks()) {
+    for (const auto& t : GetMyTanks(state)) {
         if (t.GetId() == tankId) { tank = &t; break; }
     }
     if (!tank || !tank->IsAlive()) return Action::Stop();
 
-    // Objetivo: la base del equipo contrario (A)
-    const Base& targetBase = state.GetBaseByTeam('A');
+    // Objetivo: la base del equipo contrario
+    char enemyTeam = (team == 'A') ? 'B' : 'A';
+    const Base& targetBase = state.GetBaseByTeam(enemyTeam);
     int tankX = tank->GetX();
     int tankY = tank->GetY();
     int baseX = targetBase.GetX();
@@ -98,7 +106,7 @@ Action ScriptedEnemyAgent::RandomMove(const GameState& state, int tankId) {
 
 std::vector<int> ScriptedEnemyAgent::GetLegalDirections(const GameState& state, int tankId) {
     const Tank* tank = nullptr;
-    for (const auto& t : state.GetTeamBTanks()) {
+    for (const auto& t : GetMyTanks(state)) {
         if (t.GetId() == tankId) { tank = &t; break; }
     }
     if (!tank || !tank->IsAlive()) return {};

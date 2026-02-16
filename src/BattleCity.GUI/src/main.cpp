@@ -36,8 +36,9 @@ int main(int argc, char* argv[]) {
 
 	Render2D renderer(tileSize, padding);
 
-	// Crear un agente con seed determinista para reproducibilidad
-	ScriptedEnemyAgent enemyAgent(ScriptedEnemyAgent::ScriptType::AttackBase, seed);
+	// Crear un agente por equipo con seeds deterministas
+	ScriptedEnemyAgent agentA('A', ScriptedEnemyAgent::ScriptType::AttackBase, seed);
+	ScriptedEnemyAgent agentB('B', ScriptedEnemyAgent::ScriptType::AttackBase, seed + 1);
 
 	// Ticking: actualiza la lógica a una frecuencia fija para que sea jugable.
 	const double tickSeconds = 1.0 / 10.0;
@@ -46,32 +47,39 @@ int main(int argc, char* argv[]) {
 	while (!WindowShouldClose()) {
 		accumulator += GetFrameTime();
 
-		// Input (solo controlamos el primer tanque del equipo A por ahora)
-		InputAction action = InputMap::PollAction();
-		if (!game.GetTeamATanks().empty()) {
-			Tank& player = game.GetTeamATanks().front();
-			if (action.moveDir != -1) {
-				game.MoveTank(player, action.moveDir);
-			}
-			if (action.shoot) {
-				game.TankShoot(player);
-			}
-		}
-
 		// Lógica a ticks fijos
 		while (accumulator >= tickSeconds) {
-			// IA de enemigos: cada tick, cada tanque B decide una acción
-			for (auto& enemy : game.GetTeamBTanks()) {
-				if (!enemy.IsAlive()) continue;
+			// Equipo A decide acciones
+			for (auto& tank : game.GetTeamATanks()) {
+				if (!tank.IsAlive()) continue;
 
-				Action enemyAction = enemyAgent.Decide(game, enemy.GetId());
+				Action action = agentA.Decide(game, tank.GetId());
 
-				switch (enemyAction.type) {
+				switch (action.type) {
 					case ActionType::Move:
-						game.MoveTank(enemy, enemyAction.direction);
+						game.MoveTank(tank, action.direction);
 						break;
 					case ActionType::Fire:
-						game.TankShoot(enemy);
+						game.TankShoot(tank);
+						break;
+					case ActionType::Stop:
+					default:
+						break;
+				}
+			}
+
+			// Equipo B decide acciones
+			for (auto& tank : game.GetTeamBTanks()) {
+				if (!tank.IsAlive()) continue;
+
+				Action action = agentB.Decide(game, tank.GetId());
+
+				switch (action.type) {
+					case ActionType::Move:
+						game.MoveTank(tank, action.direction);
+						break;
+					case ActionType::Fire:
+						game.TankShoot(tank);
 						break;
 					case ActionType::Stop:
 					default:

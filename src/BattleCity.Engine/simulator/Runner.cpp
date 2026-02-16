@@ -16,24 +16,45 @@ void Runner::MatchConfig(int ticks, int maxFrames, unsigned int seed) {
 void Runner::RunMatch(const vector<string>& layout) {
     gameState.Initialize(layout);
 
-    // Crear agente con la seed configurada (determinista)
-    ScriptedEnemyAgent enemyAgent(ScriptedEnemyAgent::ScriptType::AttackBase, seed);
+    // Crear un agente por equipo, ambos con la misma seed base
+    // Se usan seeds derivadas para que cada equipo tenga su propia secuencia
+    ScriptedEnemyAgent agentA('A', ScriptedEnemyAgent::ScriptType::AttackBase, seed);
+    ScriptedEnemyAgent agentB('B', ScriptedEnemyAgent::ScriptType::AttackBase, seed + 1);
 
     std::cout << "[Runner] Starting match with seed: " << seed << std::endl;
 
     while (!gameState.IsGameOver()) {
-        // IA de enemigos: cada tick, cada tanque B decide una acción
-        for (auto& enemy : gameState.GetTeamBTanks()) {
-            if (!enemy.IsAlive()) continue;
+        // Equipo A decide acciones
+        for (auto& tank : gameState.GetTeamATanks()) {
+            if (!tank.IsAlive()) continue;
 
-            Action enemyAction = enemyAgent.Decide(gameState, enemy.GetId());
+            Action action = agentA.Decide(gameState, tank.GetId());
 
-            switch (enemyAction.type) {
+            switch (action.type) {
                 case ActionType::Move:
-                    gameState.MoveTank(enemy, enemyAction.direction);
+                    gameState.MoveTank(tank, action.direction);
                     break;
                 case ActionType::Fire:
-                    gameState.TankShoot(enemy);
+                    gameState.TankShoot(tank);
+                    break;
+                case ActionType::Stop:
+                default:
+                    break;
+            }
+        }
+
+        // Equipo B decide acciones
+        for (auto& tank : gameState.GetTeamBTanks()) {
+            if (!tank.IsAlive()) continue;
+
+            Action action = agentB.Decide(gameState, tank.GetId());
+
+            switch (action.type) {
+                case ActionType::Move:
+                    gameState.MoveTank(tank, action.direction);
+                    break;
+                case ActionType::Fire:
+                    gameState.TankShoot(tank);
                     break;
                 case ActionType::Stop:
                 default:
