@@ -63,3 +63,7 @@ void Tank::SetPosition(int newX, int newY) {
     x = newX;
     y = newY;
 }
+
+void Tank::ResetIdCounter() {
+    nextId = 0;
+}

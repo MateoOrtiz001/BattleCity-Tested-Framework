@@ -1,4 +1,7 @@
 #include <raylib.h>
+#include <random>
+#include <iostream>
+#include <cstring>
 
 #include "InputMap.h"
 #include "Render2D.h"
@@ -10,7 +13,17 @@
 // Layouts están en el Engine como función inline (archivo .cpp dentro de include/)
 #include "include/map/Level1.cpp"
 
-int main() {
+int main(int argc, char* argv[]) {
+	// Parsear seed desde argumentos: --seed <valor>
+	unsigned int seed = std::random_device{}();
+	for (int i = 1; i < argc - 1; ++i) {
+		if (std::strcmp(argv[i], "--seed") == 0) {
+			seed = static_cast<unsigned int>(std::stoul(argv[i + 1]));
+			break;
+		}
+	}
+	std::cout << "[GUI] Using seed: " << seed << std::endl;
+
 	GameState game;
 	game.Initialize(GetLevel1());
 
@@ -23,8 +36,8 @@ int main() {
 
 	Render2D renderer(tileSize, padding);
 
-	// Crear un agente por cada tanque del equipo B
-	ScriptedEnemyAgent enemyAgent(ScriptedEnemyAgent::ScriptType::AttackBase);
+	// Crear un agente con seed determinista para reproducibilidad
+	ScriptedEnemyAgent enemyAgent(ScriptedEnemyAgent::ScriptType::AttackBase, seed);
 
 	// Ticking: actualiza la lógica a una frecuencia fija para que sea jugable.
 	const double tickSeconds = 1.0 / 10.0;

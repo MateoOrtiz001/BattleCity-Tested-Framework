@@ -11,6 +11,8 @@ public:
         Random
     };
 
+    /// @param seed Semilla para el generador aleatorio. Usar la misma seed
+    ///             produce la misma secuencia de decisiones (reproducibilidad).
     ScriptedEnemyAgent(ScriptType type = ScriptType::AttackBase, unsigned int seed = 0);
 
     Action Decide(const GameState& state, int tankId) override;

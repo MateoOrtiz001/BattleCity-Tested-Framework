@@ -21,6 +21,9 @@ class Tank {
         void Respawn();
         void TakeDamage(int damage);
 
+        // Resetear el contador de IDs para partidas reproducibles
+        static void ResetIdCounter();
+
     private:
         static int nextId;
         int x, y; 

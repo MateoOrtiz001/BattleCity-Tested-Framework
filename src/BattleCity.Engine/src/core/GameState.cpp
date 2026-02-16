@@ -7,6 +7,9 @@ void GameState::Initialize(const vector<string>& layout) {
     // Guardar layout original para reset
     originalLayout = layout;
     
+    // Resetear contador de IDs para reproducibilidad
+    Tank::ResetIdCounter();
+    
     // Limpiar estado previo
     teamA_tanks.clear();
     teamB_tanks.clear();

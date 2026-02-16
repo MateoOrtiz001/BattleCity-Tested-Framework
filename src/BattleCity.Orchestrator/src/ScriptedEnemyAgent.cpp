@@ -9,7 +9,9 @@ static const int DY[] = { 1, 0, -1, 0 };
 
 ScriptedEnemyAgent::ScriptedEnemyAgent(ScriptType type, unsigned int seed)
     : scriptType(type)
-    , rng(seed == 0 ? std::random_device{}() : seed) {}
+    , rng(seed) {}
+    // Nota: seed=0 es un valor válido y determinista.
+    // Para obtener una seed aleatoria, usar std::random_device{}() antes de pasar el valor.
 
 Action ScriptedEnemyAgent::Decide(const GameState& state, int tankId) {
     switch (scriptType) {
