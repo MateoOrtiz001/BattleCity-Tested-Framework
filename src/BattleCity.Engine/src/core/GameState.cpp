@@ -3,10 +3,13 @@
 
 //// INICIALIZACIÓN Y CONTROL ////
 
-void GameState::Initialize(const vector<string>& layout) {
+void GameState::Initialize(const vector<string>& layout, int tickLimit) {
     // Guardar layout original para reset
     originalLayout = layout;
-    
+
+    // Configurar límite de ticks para la partida
+    this->tickLimit = tickLimit;
+
     // Resetear contador de IDs para reproducibilidad
     Tank::ResetIdCounter();
     
@@ -62,7 +65,7 @@ void GameState::Update() {
     RemoveDestroyedWalls();
     CheckGameOver();
     
-    if (actualFrame >= timelimit) {
+    if (actualFrame >= tickLimit) {
         gameOver = true;
         winnerTeam = ' '; // Empate por tiempo
     }

@@ -14,7 +14,7 @@ void Runner::MatchConfig(int ticks, int maxFrames, unsigned int seed) {
 }
 
 void Runner::RunMatch(const vector<string>& layout) {
-    gameState.Initialize(layout);
+    gameState.Initialize(layout, maxFrames);
 
     // Crear un agente por equipo, ambos con la misma seed base
     // Se usan seeds derivadas para que cada equipo tenga su propia secuencia
@@ -66,7 +66,7 @@ void Runner::RunMatch(const vector<string>& layout) {
     }
 }
 
-void Runner::MatchResults(const std::string& filename) const {
+void Runner::MatchResults(const std::string& filename, bool consoleLog) const {
     char winner = gameState.GetWinnerTeam();
     int frames = gameState.GetActualFrame();
     int score = gameState.GetScore();
@@ -83,15 +83,17 @@ void Runner::MatchResults(const std::string& filename) const {
         file << result.dump(4) << std::endl;
         file.close();
     } else {
-        std::cerr << "[Runner] Error: No se pudo escribir el archivo del resultado" << std::endl;
+        std::cerr << "[Runner] Error: Cannot write results file: " << filename << std::endl;
     }
     
-    std::cout << "[Runner] Match finished in " << frames << " frames" << std::endl;
-    std::cout << "[Runner] Score: " << score << std::endl;
-    if (winner == ' ')
-        std::cout << "[Runner] Result: Draw" << std::endl;
-    else
-        std::cout << "[Runner] Winner: Team " << winner << std::endl;
+    if (consoleLog) {
+        std::cout << "[Runner] Match finished in " << frames << " frames" << std::endl;
+        std::cout << "[Runner] Score: " << score << std::endl;
+        if (winner == ' ')
+            std::cout << "[Runner] Result: Draw" << std::endl;
+        else
+            std::cout << "[Runner] Winner: Team " << winner << std::endl;
+    }
 }
 
 unsigned int Runner::GetSeed() const {

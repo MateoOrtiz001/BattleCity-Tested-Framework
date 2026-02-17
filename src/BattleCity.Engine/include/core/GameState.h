@@ -12,7 +12,7 @@ using namespace std;
 class GameState {
     public:
         // Inicialización y control
-        void Initialize(const vector<string>& layout);
+        void Initialize(const vector<string>& layout, int tickLimit = 500);
         void Update();
         void Reset();
         bool IsGameOver() const;
@@ -46,7 +46,7 @@ class GameState {
         int GetScore() const;
         int GetActualFrame() const;
         char GetWinnerTeam() const;
-    const Base& GetBaseByTeam(char team) const;
+        const Base& GetBaseByTeam(char team) const;
 
     private:
         // Funciones internas
@@ -64,7 +64,7 @@ class GameState {
         bool gameOver = false;
         char winnerTeam = ' ';
         int score = 0;
-        int timelimit = 500;
+        int tickLimit = 500;
         int actualFrame = 0;
         Base baseA;
         Base baseB;

@@ -15,7 +15,7 @@ class Runner{
 
         void RunMatch(const vector<string>& layout);
         void MatchConfig(int ticks, int maxFrames, unsigned int seed);
-        void MatchResults(const std::string& filename) const;
+        void MatchResults(const std::string& filename, bool consoleLog=true) const;
 
         // Getters
         unsigned int GetSeed() const;
