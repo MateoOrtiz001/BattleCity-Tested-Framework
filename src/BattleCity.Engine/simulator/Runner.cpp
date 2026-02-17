@@ -15,6 +15,7 @@ void Runner::MatchConfig(int ticks, int maxFrames, unsigned int seed) {
 
 void Runner::RunMatch(const vector<string>& layout) {
     gameState.Initialize(layout, maxFrames);
+    cheatManager = std::make_unique<CheatManager>(gameState);
 
     // Crear un agente por equipo, ambos con la misma seed base
     // Se usan seeds derivadas para que cada equipo tenga su propia secuencia
@@ -24,6 +25,8 @@ void Runner::RunMatch(const vector<string>& layout) {
     std::cout << "[Runner] Starting match with seed: " << seed << std::endl;
 
     while (!gameState.IsGameOver()) {
+
+        ExecuteScheduledCheats(gameState.GetActualFrame());
         // Equipo A decide acciones
         for (auto& tank : gameState.GetTeamATanks()) {
             if (!tank.IsAlive()) continue;
@@ -102,4 +105,48 @@ unsigned int Runner::GetSeed() const {
 
 const GameState& Runner::GetGameState() const {
     return gameState;
+}
+
+void Runner::LoadCheatScript(const std::string& filePath){
+    std::ifstream file(filePath);
+    if(!file.is_open()){
+        std::cerr << "[Runner] Error: Cannot open cheat script file: " << filePath << std::endl;
+        return;
+    }
+    std::string line;
+    while(std::getline(file, line)){
+        if(line.empty() || line[0] == '#') continue;
+
+        std::istringstream iss(line);
+        int frame;
+        if (!(iss >> frame)) continue;
+        std::string rest;
+        std::getline(iss,rest);
+        if(!rest.empty() && rest[0] == ' ') rest = rest.substr(1);
+        scheduledCheats[frame].push_back(rest);
+    }
+    std::cout << "[Runner] Loaded cheat script: " << filePath << std::endl;
+
+}
+
+bool Runner::ExecuteCheat(const std::string& command){
+    if(!cheatManager) return false;
+    return cheatManager->ExecuteCommand(command);
+}
+
+void Runner::ExecuteScheduledCheats(int frame){
+    auto it = scheduledCheats.find(frame);
+    if (it != scheduledCheats.end()){
+        for (const auto& cmd : it->second){
+            ExecuteCheat(cmd);
+        }
+    }
+}
+
+GameState& Runner::GetMutableGameState(){
+    return gameState;
+}
+
+CheatManager& Runner::GetCheatManager(){
+    return *cheatManager;
 }

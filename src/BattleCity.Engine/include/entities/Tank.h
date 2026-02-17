@@ -13,6 +13,9 @@ class Tank {
         int GetId() const;
         char GetTeam() const;
         bool IsAlive() const;
+        int GetSpawnX() const;
+        int GetSpawnY() const;
+        int GetMaxHealth() const;
 
         
         void SetPosition(int newX, int newY);
@@ -20,6 +23,12 @@ class Tank {
         void SetDirection(int newDirection);
         void Respawn();
         void TakeDamage(int damage);
+        void SetHealth(int h);
+        void Heal(int amount);
+        void SetLives(int l);
+        void Kill();
+        void FullHeal();
+
 
         // Resetear el contador de IDs para partidas reproducibles
         static void ResetIdCounter();

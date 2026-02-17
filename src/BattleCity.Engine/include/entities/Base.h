@@ -8,6 +8,11 @@ class Base {
         int GetX() const;
         int GetY() const;
         bool IsAlive() const;
+        int GetHealth() const;
+        char GetTeam() const;
+
+        void SetHealth(int h);
+        void Heal(int amount);
         void TakeDamage(int damage, char team);
     
     private:

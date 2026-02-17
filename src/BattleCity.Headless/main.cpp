@@ -11,6 +11,7 @@ int main(int argc, char* argv[]){
     int maxFrames = 500;
     int tickRate = 10;
     string outputFile = "results/result"+to_string(seed)+".json";
+    string cheatFile = "";
 
     for (int i = 1; i < argc; i++){
         if (strcmp(argv[i], "--seed") == 0){
@@ -21,6 +22,8 @@ int main(int argc, char* argv[]){
             tickRate = stoi(argv[i+1]);
         }else if (strcmp(argv[i], "--output") == 0){
             outputFile = argv[i+1];
+        }else if (strcmp(argv[i], "--cheats") == 0){
+            cheatFile = argv[i+1];
         }
     }
     cout << "[Headless] Starting a match" << endl;
@@ -28,6 +31,11 @@ int main(int argc, char* argv[]){
 
     Runner runner;
     runner.MatchConfig(tickRate, maxFrames, seed);
+    if(!cheatFile.empty()){
+        runner.LoadCheatScript(cheatFile);
+        cout << "[HeadLess] Cheat script loaded: " << cheatFile << endl;
+    }
+
     runner.RunMatch(GetLevel1());
     cout << "[Headless] Match finished. Saving results to " << outputFile << endl;
     runner.MatchResults(outputFile);

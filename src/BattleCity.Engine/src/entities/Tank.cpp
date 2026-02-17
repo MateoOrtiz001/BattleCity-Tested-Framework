@@ -1,5 +1,4 @@
 #include "include/entities/Tank.h"
-
 int Tank::nextId = 0;
 
 Tank::Tank(int x, int y, char team) 
@@ -31,6 +30,39 @@ char Tank::GetTeam() const {
 
 int Tank::GetId() const {
     return id;
+}
+
+int Tank::GetSpawnX() const {
+    return spawnX;
+}
+
+int Tank::GetSpawnY() const {
+    return spawnY;
+}
+
+int Tank::GetMaxHealth() const {
+    return 3;
+}
+
+void Tank::SetHealth(int h) {
+    this->health = h;
+}
+
+void Tank::Heal(int amount) {
+    health = health + amount > GetMaxHealth() ? GetMaxHealth() : health + amount;
+}
+
+void Tank::SetLives(int l) {
+    this->lives = l;
+}
+
+void Tank::Kill() {
+    health = 0;
+    lives = 0;
+}
+
+void Tank::FullHeal() {
+    health = GetMaxHealth();
 }
 
 void Tank::Move(int deltaX, int deltaY) {

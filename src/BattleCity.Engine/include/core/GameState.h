@@ -48,6 +48,43 @@ class GameState {
         char GetWinnerTeam() const;
         const Base& GetBaseByTeam(char team) const;
 
+        // Cheats
+        void SpawnTank(int x, int y, char team);
+        void SpawnTanks(int count, char team);
+        void RemoveTank(int tankId);
+        void RemoveAllTanks(char team);
+
+        void HealTank(int tankId, int amount);
+        void HealAllTanks(char team, int amount);
+        void SetTankLives(int tankId, int lives);
+        void HealBase(char team, int amount);
+        void SetBaseHealth(char team, int health);
+
+        void KillTank(int tankId);
+        void KillAllTanks(char team);
+        void DestroyBase(char team);
+
+        void ChangeWallType(int x, int y, const std::string& newType);
+        void ChangeAllWallsType(const std::string& newType);
+        void AddWall(int x, int y, const std::string& type);
+        void RemoveWall(int x, int y);
+        void ClearWalls();
+
+        void ForceRestart();
+        void ForceGameOver(char winner);
+        void SetTickLimit(int newLimit);
+        void SetScore(int newScore);
+        void PauseGame();
+        void ResumeGame();
+
+        void ClearAllBullets();
+        void SpawnBullet(int x, int y, int direction, char team);
+
+        int GetTankCount(char team) const;
+        int GetAliveCount(char team) const;
+        int GetTickLimit() const;
+        bool IsPaused() const;
+
     private:
         // Funciones internas
         void UpdateBullets();
@@ -68,6 +105,7 @@ class GameState {
         int actualFrame = 0;
         Base baseA;
         Base baseB;
+        bool paused = false;
         
         // Layout original para reset
         vector<string> originalLayout;

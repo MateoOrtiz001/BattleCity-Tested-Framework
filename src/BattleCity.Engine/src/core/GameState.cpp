@@ -56,7 +56,7 @@ void GameState::Initialize(const vector<string>& layout, int tickLimit) {
 }
 
 void GameState::Update() {
-    if (gameOver) return;
+    if (paused||gameOver) return;
 
     actualFrame++;
     
@@ -379,4 +379,207 @@ char GameState::GetWinnerTeam() const { return winnerTeam; }
 
 const Base& GameState::GetBaseByTeam(char team) const {
     return (team == 'A') ? baseA : baseB;
+}
+
+
+/// CHEATS ////
+void GameState::SpawnTank(int x, int y, char team){
+    if(!IsValidPosition(x,y) || IsBlocked(x,y)) return;
+    Tank newTank(x,y,team);
+    if(team == 'A') {
+        teamA_tanks.push_back(newTank);
+    } else {
+        teamB_tanks.push_back(newTank);
+    }
+}
+
+void GameState::SpawnTanks(int count, char team) {
+    int spawned = 0;
+    if (team == 'A') {
+        for (int y = 0; y < boardSize && spawned < count; y++){
+            for (int x = 0; x < boardSize && spawned < count; x++){
+                if(!IsBlocked(x,y)){
+                    if (baseA.GetX() == x && baseA.GetY() == y) continue;
+                    if (baseB.GetX() == x && baseB.GetY() == y) continue;
+                    SpawnTank(x,y,team);
+                    spawned++;
+                }
+            }
+        }
+    } else {
+        for (int y = boardSize-1; y >= 0 && spawned < count; y--){
+            for (int x = 0; x < boardSize && spawned < count; x++){
+                if(!IsBlocked(x,y)){
+                    if (baseA.GetX() == x && baseA.GetY() == y) continue;
+                    if (baseB.GetX() == x && baseB.GetY() == y) continue;
+                    SpawnTank(x,y,team);
+                    spawned++;
+                }
+            }
+        }
+    }
+    
+}
+
+void GameState::RemoveTank(int tankId){
+    auto removeById = [tankId](vector<Tank>& tanks){
+        tanks.erase(
+            remove_if(tanks.begin(), tanks.end(),
+                [tankId](const Tank& t){ return t.GetId() == tankId;}),
+            tanks.end()
+        );
+    };
+    removeById(teamA_tanks);
+    removeById(teamB_tanks);
+}
+
+void GameState::RemoveAllTanks(char team){
+    if(team == 'A'){
+        teamA_tanks.clear();
+    } else {
+        teamB_tanks.clear();
+    }
+}
+
+void GameState::HealTank(int tankId, int amount){
+    Tank* tank = GetTankById(tankId);
+    if(tank){
+        tank->Heal(amount);
+    }
+}
+
+void GameState::HealAllTanks(char team, int amount){
+    auto& tanks = (team == 'A') ? teamA_tanks : teamB_tanks;
+    for (auto& tank: tanks){
+        if (tank.IsAlive()){
+            tank.Heal(amount);
+        }
+    }
+}
+
+void GameState::SetTankLives(int tankId, int Lives){
+    Tank* tank = GetTankById(tankId);
+    if(tank){
+        tank->SetLives(Lives);
+    }
+}
+
+void GameState::HealBase(char team, int amount){
+    Base& base = (team == 'A') ? baseA : baseB;
+    base.Heal(amount);
+}
+
+void GameState::SetBaseHealth(char team, int health){
+    Base& base = (team == 'A') ? baseA : baseB;
+    base.SetHealth(health);
+}
+
+void GameState::KillTank(int tankId){
+    Tank* tank = GetTankById(tankId);
+    if(tank){
+        tank->Kill();
+    }
+}
+
+void GameState::KillAllTanks(char team){
+    auto& tanks = (team == 'A') ? teamA_tanks : teamB_tanks;
+    for (auto& tank : tanks){
+        tank.Kill();
+    }
+}
+
+void GameState::DestroyBase(char team){
+    Base& base = (team == 'A') ? baseA : baseB;
+    SetBaseHealth(team, 0);
+}
+
+void GameState::ChangeWallType(int x, int y, const std::string& newType){
+    for (auto& wall : walls){
+        if (wall->GetX() == x && wall->GetY()== y){
+            wall->SetType(newType);
+            return;
+        }
+    }
+}
+
+void GameState::ChangeAllWallsType(const std::string& newType){
+    for (auto& wall : walls){
+        wall->SetType(newType);
+    }
+}
+
+void GameState::AddWall(int x, int y, const std::string& type){
+    if(!IsValidPosition(x,y)) return;
+    if(baseA.GetX() == x && baseA.GetY() == y) return;
+    if(baseB.GetX() == x && baseB.GetY() == y) return;
+    walls.push_back(make_shared<Wall>(x,y,type));
+}
+
+void GameState::RemoveWall(int x, int y){
+    walls.erase(
+        remove_if(walls.begin(), walls.end(),
+            [x,y](const shared_ptr<Wall>& wall){
+                return wall->GetX() == x && wall->GetY() == y;
+            }),
+            walls.end()
+    );
+}
+
+void GameState::ClearWalls(){
+    walls.clear();
+}
+
+void GameState::ForceRestart(){
+    Initialize(originalLayout, tickLimit);
+}
+
+void GameState::ForceGameOver(char winner){
+    gameOver = true;
+    winnerTeam = winner;
+}
+
+void GameState::SetTickLimit(int newLimit){
+    tickLimit = newLimit;
+}
+
+void GameState::SetScore(int newScore){
+    score = newScore;
+}
+
+void GameState::PauseGame(){
+    paused = true;
+}
+
+void GameState::ResumeGame(){
+    paused = false;
+}
+
+void GameState::ClearAllBullets(){
+    bullets.clear();
+}
+
+void GameState::SpawnBullet(int x, int y, int direction, char team){
+    if(!IsValidPosition(x,y)) return;
+    bullets.emplace_back(x,y,direction,team);
+}
+
+int GameState::GetTankCount(char team) const {
+    return static_cast<int>((team == 'A') ? teamA_tanks.size() : teamB_tanks.size());
+}
+
+int GameState::GetAliveCount(char team) const {
+    int count = 0;
+    const auto& tanks = (team == 'A') ? teamA_tanks : teamB_tanks;
+    for (const auto& tank : tanks) {
+        if (tank.IsAlive()) count++;
+    }
+    return count;
+}
+
+int GameState::GetTickLimit() const {
+    return tickLimit;
+}
+
+bool GameState::IsPaused() const {
+    return paused;
 }

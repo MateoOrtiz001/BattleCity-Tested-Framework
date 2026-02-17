@@ -13,6 +13,22 @@ bool Base::IsAlive() const {
     return health > 0;
 }
 
+int Base::GetHealth() const {
+    return health;
+}
+
+char Base::GetTeam() const {
+    return team;
+}
+
+void Base::SetHealth(int h){
+    health = h;
+}
+
+void Base::Heal(int amount) {
+    health += amount;
+}
+
 void Base::TakeDamage(int damage, char team) {
     if (this->team == team) {
         return; // No se recibe daño de la misma equipo
