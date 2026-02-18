@@ -10,6 +10,12 @@
 
 using namespace std;
 
+struct CheatLogEntry {
+    int frame;
+    string command;
+    bool success;
+};
+
 class CheatManager {
     public:
         explicit CheatManager(GameState& gameState);
@@ -19,10 +25,14 @@ class CheatManager {
 
         vector<string> GetAvailableCommands() const;
 
+        const vector<CheatLogEntry>& GetLog() const;
+        void ClearLog();
+
     private:
         GameState& gameState;
         using CommandHandler = function<void(const vector<string>&)>;
         unordered_map<string, CommandHandler> commands;
+        vector<CheatLogEntry> log;
 
         void RegisterCommands();
         vector<string> Tokenize(const string& line) const;

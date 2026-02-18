@@ -146,6 +146,27 @@ void CheatManager::RegisterCommands(){
     };
 }
 
+bool CheatManager::ExecuteCommand(const string& commandLine){
+    auto tokens = Tokenize(commandLine);
+    if (tokens.empty()) return false;
+
+    string cmd = tokens[0];
+    vector<string> args(tokens.begin() + 1, tokens.end());
+
+    auto it = commands.find(cmd);
+    bool succes = false;
+    if (it != commands.end()){
+        try {
+            it->second(args);
+            succes = true;
+        } catch (const exception& e){
+            cerr << "[Cheat] Error: " << e.what() << endl;
+        }
+    }
+    log.push_back({gameState.GetActualFrame(), commandLine, succes});
+    return succes;
+}
+
 int CheatManager::ProcessCommandFile(const string& filePath){
     ifstream file(filePath);
     if(!file.is_open()){
@@ -180,4 +201,12 @@ vector<string> CheatManager::Tokenize(const string& line) const {
         tokens.push_back(token);
     }
     return tokens;
+}
+
+const vector<CheatLogEntry>& CheatManager::GetLog() const {
+    return log;
+}
+
+void CheatManager::ClearLog(){
+    log.clear();
 }

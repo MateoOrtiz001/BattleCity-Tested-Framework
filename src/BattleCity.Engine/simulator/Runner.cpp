@@ -81,6 +81,22 @@ void Runner::MatchResults(const std::string& filename, bool consoleLog) const {
     result["score"] = score;
     result["winner"] = (winner == ' ') ? "Draw" : std::string(1, winner);
 
+    if (cheatManager){
+        const auto& cheatLog = cheatManager->GetLog();
+        json cheatsArray = json::array();
+        for (const auto& entry : cheatLog){
+            cheatsArray.push_back({
+                {"frame", entry.frame},
+                {"command", entry.command},
+                {"success", entry.success}
+            });
+        }
+        result["cheats_executed"] = cheatsArray;
+        result["cheats_total"] = static_cast<int>(cheatLog.size());
+        result["cheats_failed"] = static_cast<int>(std::count_if(cheatLog.begin(),cheatLog.end(),
+            [](const CheatLogEntry& e) { return !e.success; }));
+    }
+
     std::ofstream file(filename);
     if (file.is_open()) {
         file << result.dump(4) << std::endl;
@@ -96,6 +112,9 @@ void Runner::MatchResults(const std::string& filename, bool consoleLog) const {
             std::cout << "[Runner] Result: Draw" << std::endl;
         else
             std::cout << "[Runner] Winner: Team " << winner << std::endl;
+        if (cheatManager){
+            std::cout << "[Runner] Cheats executed: " << cheatManager->GetLog().size() << std::endl;
+        }
     }
 }
 
