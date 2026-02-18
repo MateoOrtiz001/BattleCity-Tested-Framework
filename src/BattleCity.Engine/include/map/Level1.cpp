@@ -2,9 +2,9 @@
 
 #include <string>
 #include <vector>
+using namespace std;
 
-inline std::vector<std::string> GetLevel1() {
-	// Retorna un layout simple de 24x24 para Battle City
+inline vector<string> GetLevel1() {
 	// 'A': Tanque equipo A
 	// 'B': Tanque equipo B
 	// 'a': Base equipo A

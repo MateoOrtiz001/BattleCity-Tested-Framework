@@ -35,10 +35,15 @@ int main(int argc, char* argv[]){
         runner.LoadCheatScript(cheatFile);
         cout << "[HeadLess] Cheat script loaded: " << cheatFile << endl;
     }
-
-    runner.RunMatch(GetLevel1());
-    cout << "[Headless] Match finished. Saving results to " << outputFile << endl;
-    runner.MatchResults(outputFile);
+    try {
+        runner.RunMatch(GetLevel1());
+        cout << "[Headless] Match finished. Saving results to " << outputFile << endl;
+        runner.MatchResults(outputFile);
+    } catch (const std::exception& e) {
+        cerr << "[Headless] Error during match execution: " << e.what() << endl;
+        return 1;
+    }
+    
 
     return 0;
 }
