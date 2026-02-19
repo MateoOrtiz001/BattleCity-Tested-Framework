@@ -25,7 +25,8 @@ void Runner::RunMatch(const vector<string>& layout) {
         // Equipo A decide acciones
         for (auto& tank : gameState.GetTeamATanks()) {
             if (!tank.IsAlive()) continue;
-
+            
+            EnsureAgentExists(tank);
             Action action = agentMap[tank.GetId()]->Decide(gameState, tank.GetId());
 
             switch (action.type) {
@@ -124,7 +125,7 @@ void Runner::SetTeamPolicy(char team, ScriptedEnemyAgent::ScriptType policy){
 
 void Runner::EnsureAgentExists(const Tank& tank){
     int id = tank.GetId();
-    if (agentMap.count(id) == 0) return;
+    if (agentMap.count(id) != 0) return;
 
     char team = tank.GetTeam();
     ScriptedEnemyAgent::ScriptType policy = (team == 'A') ? teamAPolicy : teamBPolicy;

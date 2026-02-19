@@ -1,5 +1,9 @@
 #include "simulator/Runner.h"
 #include "include/map/Level1.cpp"
+#include "include/map/Level2.cpp"
+#include "include/map/Level3.cpp"
+#include "include/map/Level4.cpp"
+#include "include/map/Level5.cpp"
 #include <iostream>
 #include <cstring>
 #include <random>
@@ -12,6 +16,7 @@ int main(int argc, char* argv[]){
     int tickRate = 10;
     string outputFile = "results/result"+to_string(seed)+".json";
     string cheatFile = "";
+    string level = "level1";
 
     for (int i = 1; i < argc; i++){
         if (strcmp(argv[i], "--seed") == 0){
@@ -24,6 +29,8 @@ int main(int argc, char* argv[]){
             outputFile = argv[i+1];
         }else if (strcmp(argv[i], "--cheats") == 0){
             cheatFile = argv[i+1];
+        }else if (strcmp(argv[i], "--level")== 0){
+            level = argv[i+1];
         }
     }
     cout << "[Headless] Starting a match" << endl;
@@ -36,7 +43,12 @@ int main(int argc, char* argv[]){
         cout << "[HeadLess] Cheat script loaded: " << cheatFile << endl;
     }
     try {
-        runner.RunMatch(GetLevel1());
+        if (level == "level1") runner.RunMatch(GetLevel1());
+        else if (level == "level2") runner.RunMatch(GetLevel2());
+        else if (level == "level3") runner.RunMatch(GetLevel3());
+        else if (level == "level4") runner.RunMatch(GetLevel4());
+        else if (level == "level5") runner.RunMatch(GetLevel5());
+        else cerr << "[Headless] Error: " << level << " doesn't exists." << endl; return 1;
         cout << "[Headless] Match finished. Saving results to " << outputFile << endl;
         runner.MatchResults(outputFile);
     } catch (const std::exception& e) {

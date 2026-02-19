@@ -1,4 +1,4 @@
-#include "include/PathFinder.h"
+#include "include/agents/PathFinder.h"
 #include "include/utils/Utils.h"
 
 #include <vector>

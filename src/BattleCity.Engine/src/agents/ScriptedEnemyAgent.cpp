@@ -1,4 +1,4 @@
-#include "include/ScriptedEnemyAgent.h"
+#include "include/agents/ScriptedEnemyAgent.h"
 #include "include/core/GameState.h"
 #include "include/utils/Utils.h"
 #include <vector>
@@ -155,6 +155,7 @@ Action ScriptedEnemyAgent::DefensiveAgent(const GameState& state, int tankId){
         }
     }
 
+    return Action::Stop();
 }
 
 Action ScriptedEnemyAgent::AStarAttack(const GameState& state, int tankId){

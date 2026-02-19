@@ -2,7 +2,7 @@
 #include "../include/core/GameState.h"
 #include "../include/core/Action.h"
 #include "../include/core/CheatManager.h"
-#include "include/ScriptedEnemyAgent.h"
+#include "include/agents/ScriptedEnemyAgent.h"
 #include <vector>
 #include <string>
 #include <memory>
