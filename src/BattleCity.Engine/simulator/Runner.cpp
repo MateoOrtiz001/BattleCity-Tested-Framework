@@ -1,5 +1,4 @@
 #include "Runner.h"
-#include "include/ScriptedEnemyAgent.h"
 #include "external/json.hpp"
 #include "fstream"
 
@@ -14,13 +13,9 @@ void Runner::MatchConfig(int ticks, int maxFrames, unsigned int seed) {
 }
 
 void Runner::RunMatch(const vector<string>& layout) {
+    agentMap.clear();
     gameState.Initialize(layout, maxFrames);
     cheatManager = std::make_unique<CheatManager>(gameState);
-
-    // Crear un agente por equipo, ambos con la misma seed base
-    // Se usan seeds derivadas para que cada equipo tenga su propia secuencia
-    ScriptedEnemyAgent agentA('A', ScriptedEnemyAgent::ScriptType::AttackBase, seed);
-    ScriptedEnemyAgent agentB('B', ScriptedEnemyAgent::ScriptType::AttackBase, seed + 1);
 
     std::cout << "[Runner] Starting match with seed: " << seed << std::endl;
 
@@ -31,7 +26,7 @@ void Runner::RunMatch(const vector<string>& layout) {
         for (auto& tank : gameState.GetTeamATanks()) {
             if (!tank.IsAlive()) continue;
 
-            Action action = agentA.Decide(gameState, tank.GetId());
+            Action action = agentMap[tank.GetId()]->Decide(gameState, tank.GetId());
 
             switch (action.type) {
                 case ActionType::Move:
@@ -50,7 +45,8 @@ void Runner::RunMatch(const vector<string>& layout) {
         for (auto& tank : gameState.GetTeamBTanks()) {
             if (!tank.IsAlive()) continue;
 
-            Action action = agentB.Decide(gameState, tank.GetId());
+            EnsureAgentExists(tank);
+            Action action = agentMap[tank.GetId()]->Decide(gameState, tank.GetId());
 
             switch (action.type) {
                 case ActionType::Move:
@@ -116,6 +112,25 @@ void Runner::MatchResults(const std::string& filename, bool consoleLog) const {
             std::cout << "[Runner] Cheats executed: " << cheatManager->GetLog().size() << std::endl;
         }
     }
+}
+
+void Runner::SetTeamPolicy(char team, ScriptedEnemyAgent::ScriptType policy){
+    if (team == 'A'){
+        teamAPolicy = policy;
+    } else if (team == 'B'){
+        teamBPolicy = policy;
+    }
+}
+
+void Runner::EnsureAgentExists(const Tank& tank){
+    int id = tank.GetId();
+    if (agentMap.count(id) == 0) return;
+
+    char team = tank.GetTeam();
+    ScriptedEnemyAgent::ScriptType policy = (team == 'A') ? teamAPolicy : teamBPolicy;
+
+    unsigned int tankSeed = seed ^ (static_cast<unsigned int>(id) * 2654435761u); // Mezcla la seed con el ID del tanque para diversidad
+    agentMap[id] = std::make_unique<ScriptedEnemyAgent>(team, policy, tankSeed);
 }
 
 unsigned int Runner::GetSeed() const {
