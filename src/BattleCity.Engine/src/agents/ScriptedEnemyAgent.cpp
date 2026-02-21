@@ -192,6 +192,18 @@ Action ScriptedEnemyAgent::AStarAttack(const GameState& state, int tankId){
     return Action::Move(path.firstDir);
 }
 
+Action ScriptedEnemyAgent::Interceptor(const GameState& state, int tankId){
+    const Tank* tank = nullptr;
+    for(const auto& t : GetMyTanks(state)){
+        if(t.GetId() == tankId){tank = &t; break;}
+    }
+    if(!tank || !tank->IsAlive()) return Action::Stop();
+    
+    PathFinder::Target target = PathFinder::FindCheapestTarget(
+        state, team, tank->GetX(), tank->GetY(), tank
+    );
+}
+
 std::vector<int> ScriptedEnemyAgent::GetLegalDirections(const GameState& state, int tankId) {
     const Tank* tank = nullptr;
     for (const auto& t : GetMyTanks(state)) {

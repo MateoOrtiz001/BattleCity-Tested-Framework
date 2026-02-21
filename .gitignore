@@ -1,1 +1,72 @@
+# --- .NET / C# ---
+**/bin/
+**/obj/
+**/TestResults/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.vs/
+
+# --- NuGet ---
+*.nupkg
+*.snupkg
+packages/
+.nuget/
+
+# --- C++ / CMake ---
 build/
+cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+compile_commands.json
+CTestTestfile.cmake
+Makefile
+
+# --- Visual C++ / MSBuild ---
+*.VC.db
+*.VC.opendb
+*.pdb
+*.ilk
+*.idb
+*.ipch
+Debug/
+Release/
+x64/
+x86/
+
+# --- VS Code / IDE ---
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+
+# --- Logs / reports / runtime outputs ---
+*.log
+*.tmp
+*.pid
+*.json
+*.txt
+
+# Orchestrator outputs (generados)
+results/
+results-*/
+orchestrator-smoke/
+**/errors/
+**/report.html
+**/summary.csv
+**/matches.csv
+**/summary.txt
+
+# --- Coverage ---
+coverage/
+*.coverage
+*.coveragexml
+*.trx
+
+# --- OS ---
+.DS_Store
+Thumbs.db

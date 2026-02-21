@@ -16,7 +16,8 @@ public:
         AttackBase,
         Random,
         Defensive,
-        AStarAttack
+        AStarAttack,
+        Interceptor
     };
 
     /// @param team Equipo al que pertenece este agente ('A' o 'B').
@@ -33,7 +34,7 @@ private:
     Action RandomMove(const GameState& state, int tankId);
     Action DefensiveAgent(const GameState& state, int tankId);
     Action AStarAttack(const GameState& state, int tankId);
-    Action AggresiveHunter(const GameState& state, int tankId);
+    Action Interceptor(const GameState& state, int tankId);
 
 
     // Devuelve las direcciones en las que el tanque puede moverse (no bloqueado)

@@ -20,17 +20,29 @@ int main(int argc, char* argv[]){
 
     for (int i = 1; i < argc; i++){
         if (strcmp(argv[i], "--seed") == 0){
+            if (i + 1 >= argc) { cerr << "[Headless] Missing value for --seed" << endl; return 1; }
             seed = static_cast<unsigned int>(stoul(argv[i+1]));
+            i++;
         }else if (strcmp(argv[i], "--maxFrames") == 0){
+            if (i + 1 >= argc) { cerr << "[Headless] Missing value for --maxFrames" << endl; return 1; }
             maxFrames = stoi(argv[i+1]);
+            i++;
         }else if (strcmp(argv[i], "--tickRate") == 0){
+            if (i + 1 >= argc) { cerr << "[Headless] Missing value for --tickRate" << endl; return 1; }
             tickRate = stoi(argv[i+1]);
+            i++;
         }else if (strcmp(argv[i], "--output") == 0){
+            if (i + 1 >= argc) { cerr << "[Headless] Missing value for --output" << endl; return 1; }
             outputFile = argv[i+1];
+            i++;
         }else if (strcmp(argv[i], "--cheats") == 0){
+            if (i + 1 >= argc) { cerr << "[Headless] Missing value for --cheats" << endl; return 1; }
             cheatFile = argv[i+1];
+            i++;
         }else if (strcmp(argv[i], "--level")== 0){
+            if (i + 1 >= argc) { cerr << "[Headless] Missing value for --level" << endl; return 1; }
             level = argv[i+1];
+            i++;
         }
     }
     cout << "[Headless] Starting a match" << endl;
@@ -48,7 +60,10 @@ int main(int argc, char* argv[]){
         else if (level == "level3") runner.RunMatch(GetLevel3());
         else if (level == "level4") runner.RunMatch(GetLevel4());
         else if (level == "level5") runner.RunMatch(GetLevel5());
-        else cerr << "[Headless] Error: " << level << " doesn't exists." << endl; return 1;
+        else {
+            cerr << "[Headless] Error: " << level << " doesn't exists." << endl;
+            return 1;
+        }
         cout << "[Headless] Match finished. Saving results to " << outputFile << endl;
         runner.MatchResults(outputFile);
     } catch (const std::exception& e) {
