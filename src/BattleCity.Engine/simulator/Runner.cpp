@@ -10,59 +10,72 @@ void Runner::MatchConfig(int ticks, int maxFrames, unsigned int seed) {
     this->tickRate = ticks;
     this->maxFrames = maxFrames;
     this->seed = seed;
+    scheduledCheats.clear();
+    cheatScriptPath.clear();
 }
 
-void Runner::RunMatch(const vector<string>& layout) {
+void Runner::StartMatch(const vector<string>& layout) {
     agentMap.clear();
     gameState.Initialize(layout, maxFrames);
     cheatManager = std::make_unique<CheatManager>(gameState);
 
     std::cout << "[Runner] Starting match with seed: " << seed << std::endl;
+}
+
+void Runner::StepMatch() {
+    if (gameState.IsGameOver()) {
+        return;
+    }
+
+    ExecuteScheduledCheats(gameState.GetActualFrame());
+    // Equipo A decide acciones
+    for (auto& tank : gameState.GetTeamATanks()) {
+        if (!tank.IsAlive()) continue;
+        
+        EnsureAgentExists(tank);
+        Action action = agentMap[tank.GetId()]->Decide(gameState, tank.GetId());
+
+        switch (action.type) {
+            case ActionType::Move:
+                gameState.MoveTank(tank, action.direction);
+                break;
+            case ActionType::Fire:
+                gameState.TankShoot(tank);
+                break;
+            case ActionType::Stop:
+            default:
+                break;
+        }
+    }
+
+    // Equipo B decide acciones
+    for (auto& tank : gameState.GetTeamBTanks()) {
+        if (!tank.IsAlive()) continue;
+
+        EnsureAgentExists(tank);
+        Action action = agentMap[tank.GetId()]->Decide(gameState, tank.GetId());
+
+        switch (action.type) {
+            case ActionType::Move:
+                gameState.MoveTank(tank, action.direction);
+                break;
+            case ActionType::Fire:
+                gameState.TankShoot(tank);
+                break;
+            case ActionType::Stop:
+            default:
+                break;
+        }
+    }
+
+    gameState.Update();
+}
+
+void Runner::RunMatch(const vector<string>& layout) {
+    StartMatch(layout);
 
     while (!gameState.IsGameOver()) {
-
-        ExecuteScheduledCheats(gameState.GetActualFrame());
-        // Equipo A decide acciones
-        for (auto& tank : gameState.GetTeamATanks()) {
-            if (!tank.IsAlive()) continue;
-            
-            EnsureAgentExists(tank);
-            Action action = agentMap[tank.GetId()]->Decide(gameState, tank.GetId());
-
-            switch (action.type) {
-                case ActionType::Move:
-                    gameState.MoveTank(tank, action.direction);
-                    break;
-                case ActionType::Fire:
-                    gameState.TankShoot(tank);
-                    break;
-                case ActionType::Stop:
-                default:
-                    break;
-            }
-        }
-
-        // Equipo B decide acciones
-        for (auto& tank : gameState.GetTeamBTanks()) {
-            if (!tank.IsAlive()) continue;
-
-            EnsureAgentExists(tank);
-            Action action = agentMap[tank.GetId()]->Decide(gameState, tank.GetId());
-
-            switch (action.type) {
-                case ActionType::Move:
-                    gameState.MoveTank(tank, action.direction);
-                    break;
-                case ActionType::Fire:
-                    gameState.TankShoot(tank);
-                    break;
-                case ActionType::Stop:
-                default:
-                    break;
-            }
-        }
-
-        gameState.Update();
+        StepMatch();
     }
 }
 
@@ -74,6 +87,10 @@ void Runner::MatchResults(const std::string& filename, bool consoleLog) const {
     json result;
 
     result["seed"] = seed;
+    result["tick_rate"] = tickRate;
+    result["max_frames"] = maxFrames;
+    result["level"] = levelName;
+    result["cheats_file"] = cheatScriptPath;
     result["frames"] = frames;
     result["score"] = score;
     result["winner"] = (winner == ' ') ? "Draw" : std::string(1, winner);
@@ -148,6 +165,8 @@ void Runner::LoadCheatScript(const std::string& filePath){
         std::cerr << "[Runner] Error: Cannot open cheat script file: " << filePath << std::endl;
         return;
     }
+    cheatScriptPath = filePath;
+    scheduledCheats.clear();
     std::string line;
     while(std::getline(file, line)){
         if(line.empty() || line[0] == '#') continue;
@@ -184,4 +203,8 @@ GameState& Runner::GetMutableGameState(){
 
 CheatManager& Runner::GetCheatManager(){
     return *cheatManager;
+}
+
+void Runner::SetLevelName(const std::string& levelName){
+    this->levelName = levelName;
 }

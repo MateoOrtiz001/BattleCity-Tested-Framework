@@ -50,6 +50,7 @@ int main(int argc, char* argv[]){
 
     Runner runner;
     runner.MatchConfig(tickRate, maxFrames, seed);
+    runner.SetLevelName(level);
     if(!cheatFile.empty()){
         runner.LoadCheatScript(cheatFile);
         cout << "[HeadLess] Cheat script loaded: " << cheatFile << endl;

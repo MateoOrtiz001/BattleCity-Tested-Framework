@@ -19,8 +19,11 @@ class Runner{
         Runner();
 
         void RunMatch(const vector<string>& layout);
+        void StartMatch(const vector<string>& layout);
+        void StepMatch();
         void MatchConfig(int ticks, int maxFrames, unsigned int seed);
         void MatchResults(const string& filename, bool consoleLog=true) const;
+        void SetLevelName(const string& levelName);
 
         // Getters
         unsigned int GetSeed() const;
@@ -37,6 +40,8 @@ class Runner{
         unsigned int seed = 0;
         int tickRate = 10;
         int maxFrames = 500;
+        string levelName = "level1";
+        string cheatScriptPath = "";
         GameState gameState;
         unique_ptr<CheatManager> cheatManager;
         ScriptedEnemyAgent::ScriptType teamAPolicy = ScriptedEnemyAgent::ScriptType::AttackBase;
