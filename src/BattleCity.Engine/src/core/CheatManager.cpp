@@ -1,24 +1,35 @@
 #include "include/core/CheatManager.h"
 #include <fstream>
 #include <iostream>
+#include <stdexcept>
+#include <utility>
 
 using namespace std;
 
-CheatManager::CheatManager(GameState& state) : gameState(state) {
+CheatManager::CheatManager(GameState& state, std::function<void(int, const std::string&)> onTankSpawnedWithPolicy)
+    : gameState(state), onTankSpawnedWithPolicy(std::move(onTankSpawnedWithPolicy)) {
     RegisterCommands();
 }
 
 void CheatManager::RegisterCommands(){
     commands["spawn_tank"] = [this](const std::vector<std::string>& args) {
-        // spawn_tank <x> <y> <team>
-        if (args.size() < 3) return;
-        gameState.SpawnTank(stoi(args[0]), stoi(args[1]), args[2][0]);
+        // spawn_tank <x> <y> <team> <agent_type>
+        if (args.size() < 4) throw invalid_argument("spawn_tank requires: <x> <y> <team> <agent_type>");
+        auto maybeId = gameState.SpawnTank(stoi(args[0]), stoi(args[1]), args[2][0]);
+        if (maybeId.has_value() && onTankSpawnedWithPolicy) {
+            onTankSpawnedWithPolicy(*maybeId, args[3]);
+        }
     };
 
     commands["spawn_tanks"] = [this](const std::vector<std::string>& args) {
-        // spawn_tanks <count> <team>
-        if (args.size() < 2) return;
-        gameState.SpawnTanks(stoi(args[0]), args[1][0]);
+        // spawn_tanks <count> <team> <agent_type>
+        if (args.size() < 3) throw invalid_argument("spawn_tanks requires: <count> <team> <agent_type>");
+        auto spawnedIds = gameState.SpawnTanks(stoi(args[0]), args[1][0]);
+        if (onTankSpawnedWithPolicy) {
+            for (int tankId : spawnedIds) {
+                onTankSpawnedWithPolicy(tankId, args[2]);
+            }
+        }
     };
 
     commands["kill_tank"] = [this](const std::vector<std::string>& args) {

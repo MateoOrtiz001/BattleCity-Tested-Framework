@@ -122,8 +122,11 @@ namespace BattleCity.Orchestrator
                         ExtraArguments = new Dictionary<string, string>
                         {
                             ["tickRate"] = options.TickRate.ToString(),
-                            ["level"] = options.Level
-                        }
+                            ["level"] = options.Level,
+                            ["teamAPolicy"] = options.TeamAPolicy,
+                            ["teamBPolicy"] = options.TeamBPolicy
+                        },
+                        TankPolicySpecs = new List<string>(options.TankPolicySpecs)
                     })
                     .ToList();
 
@@ -218,8 +221,11 @@ namespace BattleCity.Orchestrator
                 ExtraArguments = new Dictionary<string, string>
                 {
                     ["tickRate"] = options.TickRate.ToString(),
-                    ["level"] = options.Level
-                }
+                    ["level"] = options.Level,
+                    ["teamAPolicy"] = options.TeamAPolicy,
+                    ["teamBPolicy"] = options.TeamBPolicy
+                },
+                TankPolicySpecs = new List<string>(options.TankPolicySpecs)
             }).ToList();
 
             var rerunOutputDir = Path.Combine(options.OutputDir, "rerun");
@@ -287,6 +293,7 @@ namespace BattleCity.Orchestrator
             public List<string> Comments { get; } = new();
 
             public int? ManyCount { get; set; }
+            public string SpawnAgentType { get; set; } = "attack_base";
             public char DestroyBaseTeam { get; set; } = 'A';
         }
 
@@ -301,7 +308,7 @@ namespace BattleCity.Orchestrator
 
             try
             {
-                ApplyPreset(options.Preset, builder);
+                ApplyPreset(options.Preset, builder, options.SpawnAgentType);
             }
             catch (ArgumentException ex)
             {
@@ -314,9 +321,9 @@ namespace BattleCity.Orchestrator
             if (options.ManyCount.HasValue)
             {
                 var count = options.ManyCount.Value;
-                builder.CommandAt(1, $"spawn_tanks {count} A")
-                    .CommandAt(1, $"spawn_tanks {count} B")
-                    .Comment($"many-count: {count}");
+                builder.CommandAt(1, $"spawn_tanks {count} A {options.SpawnAgentType}")
+                    .CommandAt(1, $"spawn_tanks {count} B {options.SpawnAgentType}")
+                    .Comment($"many-count: {count}, agent: {options.SpawnAgentType}");
             }
 
             if (!string.IsNullOrWhiteSpace(options.Preset) &&
@@ -385,6 +392,9 @@ namespace BattleCity.Orchestrator
                         case "--many-count":
                             options.ManyCount = ParseInt(GetNextArg(args, ref i, "--many-count"), "--many-count");
                             break;
+                        case "--spawn-agent":
+                            options.SpawnAgentType = GetNextArg(args, ref i, "--spawn-agent");
+                            break;
                         case "--destroy-base-team":
                             var team = GetNextArg(args, ref i, "--destroy-base-team").Trim().ToUpperInvariant();
                             if (team != "A" && team != "B")
@@ -418,7 +428,7 @@ namespace BattleCity.Orchestrator
             return options;
         }
 
-        private static void ApplyPreset(string? preset, CheatScriptBuilder builder)
+        private static void ApplyPreset(string? preset, CheatScriptBuilder builder, string spawnAgentType)
         {
             if (string.IsNullOrWhiteSpace(preset))
                 return;
@@ -434,13 +444,13 @@ namespace BattleCity.Orchestrator
                 case "1v1":
                     builder.CommandAt(1, "remove_all_tanks A")
                         .CommandAt(1, "remove_all_tanks B")
-                        .CommandAt(2, "spawn_tanks 1 A")
-                        .CommandAt(2, "spawn_tanks 1 B")
+                        .CommandAt(2, $"spawn_tanks 1 A {spawnAgentType}")
+                        .CommandAt(2, $"spawn_tanks 1 B {spawnAgentType}")
                         .Comment("Preset: 1v1");
                     break;
                 case "many-vs-many":
-                    builder.CommandAt(1, "spawn_tanks 10 A")
-                        .CommandAt(1, "spawn_tanks 10 B")
+                    builder.CommandAt(1, $"spawn_tanks 10 A {spawnAgentType}")
+                        .CommandAt(1, $"spawn_tanks 10 B {spawnAgentType}")
                         .Comment("Preset: many-vs-many");
                     break;
                 case "destroy-base-a":
@@ -455,8 +465,8 @@ namespace BattleCity.Orchestrator
                     builder.Comment("Preset: destroy-base (team selected via --destroy-base-team)");
                     break;
                 case "stress":
-                    builder.CommandAt(1, "spawn_tanks 50 A")
-                        .CommandAt(1, "spawn_tanks 50 B")
+                    builder.CommandAt(1, $"spawn_tanks 50 A {spawnAgentType}")
+                        .CommandAt(1, $"spawn_tanks 50 B {spawnAgentType}")
                         .Comment("Preset: stress");
                     break;
                 default:
@@ -497,6 +507,9 @@ namespace BattleCity.Orchestrator
             public string? CheatsFile { get; set; }
             public string OutputDir { get; set; } = "results";
             public bool Retry { get; set; } = false;
+            public string TeamAPolicy { get; set; } = "attack_base";
+            public string TeamBPolicy { get; set; } = "attack_base";
+            public List<string> TankPolicySpecs { get; } = new();
         }
 
         private static RunOptions? ParseRunOptions(string[] args)
@@ -538,6 +551,15 @@ namespace BattleCity.Orchestrator
                             break;
                         case "--output-dir":
                             options.OutputDir = GetNextArg(args, ref i, "--output-dir");
+                            break;
+                        case "--team-a-policy":
+                            options.TeamAPolicy = GetNextArg(args, ref i, "--team-a-policy");
+                            break;
+                        case "--team-b-policy":
+                            options.TeamBPolicy = GetNextArg(args, ref i, "--team-b-policy");
+                            break;
+                        case "--tank-policy":
+                            options.TankPolicySpecs.Add(GetNextArg(args, ref i, "--tank-policy"));
                             break;
                         case "--retry":
                             options.Retry = true;
@@ -663,6 +685,9 @@ namespace BattleCity.Orchestrator
     --parallel <N>         Max parallel matches (default: CPU cores)
     --timeout <seconds>    Timeout per match in seconds (default: 60)
     --cheats <path>        Path to cheats file
+    --team-a-policy <type> Team A default agent (attack_base|random|defensive|astar_attack|interceptor)
+    --team-b-policy <type> Team B default agent (attack_base|random|defensive|astar_attack|interceptor)
+    --tank-policy <id:type> Repeatable per-tank agent override
     --output-dir <path>    Output directory (default: results)
     --retry                Retry crashed matches once
     --verbose              Show detailed output
@@ -672,16 +697,18 @@ namespace BattleCity.Orchestrator
         --preset <empty-map|1v1|many-vs-many|destroy-base|destroy-base-a|destroy-base-b|stress>
         --at <frame:command>          Repeatable (Runner format)
         --comment <text>              Repeatable
-        --many-count <N>              Adds spawn_tanks N A/B at frame 1
+        --many-count <N>              Adds spawn_tanks N A/B <spawn-agent> at frame 1
+        --spawn-agent <type>          Agent type for generated spawn_tanks commands (default: attack_base)
         --destroy-base-team <A|B>     For destroy-base preset variant
         --print
 
   Examples:
     BattleCity.Orchestrator run --exe game.exe --count 100
     BattleCity.Orchestrator run --exe game.exe --count 50 --parallel 8 --retry
+        BattleCity.Orchestrator run --exe game.exe --team-a-policy astar_attack --team-b-policy defensive --tank-policy ""2:random""
     BattleCity.Orchestrator rerun-failed --exe game.exe --output-dir results
     BattleCity.Orchestrator build-cheats --out cheats\stress.txt --preset stress --print
-    BattleCity.Orchestrator build-cheats --out cheats\custom.txt --at ""10:spawn_tanks 3 A"" --at ""20:heal_all A 5""
+        BattleCity.Orchestrator build-cheats --out cheats\custom.txt --at ""10:spawn_tanks 3 A attack_base"" --at ""20:heal_all A 5""
 ");
         }
 
@@ -697,6 +724,9 @@ namespace BattleCity.Orchestrator
             Console.WriteLine($"    Parallel:       {options.Parallel}");
             Console.WriteLine($"    Timeout:        {options.TimeoutSeconds}s");
             Console.WriteLine($"    Cheats:         {options.CheatsFile ?? "(none)"}");
+            Console.WriteLine($"    Team A policy:  {options.TeamAPolicy}");
+            Console.WriteLine($"    Team B policy:  {options.TeamBPolicy}");
+            Console.WriteLine($"    Tank policies:  {(options.TankPolicySpecs.Count == 0 ? "(none)" : string.Join(", ", options.TankPolicySpecs))}");
             Console.WriteLine($"    Output dir:     {options.OutputDir}");
             Console.WriteLine($"    Retry on crash: {(options.Retry ? "Yes" : "No")}");
         }

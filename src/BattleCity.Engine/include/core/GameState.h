@@ -2,6 +2,7 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <optional>
 #include "../entities/Tank.h"
 #include "../entities/Wall.h"
 #include "../entities/Base.h"
@@ -49,8 +50,8 @@ class GameState {
         const Base& GetBaseByTeam(char team) const;
 
         // Cheats
-        void SpawnTank(int x, int y, char team);
-        void SpawnTanks(int count, char team);
+        std::optional<int> SpawnTank(int x, int y, char team);
+        std::vector<int> SpawnTanks(int count, char team);
         void RemoveTank(int tankId);
         void RemoveAllTanks(char team);
 

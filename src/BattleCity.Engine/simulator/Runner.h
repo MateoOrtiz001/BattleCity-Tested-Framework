@@ -31,6 +31,9 @@ class Runner{
         GameState& GetMutableGameState();
         CheatManager& GetCheatManager();
         void SetTeamPolicy(char team, ScriptedEnemyAgent::ScriptType policy);
+        void SetTankPolicy(int tankId, ScriptedEnemyAgent::ScriptType policy);
+        bool SetTeamPolicyByName(char team, const std::string& policyName);
+        bool SetTankPolicyByName(int tankId, const std::string& policyName);
 
         // Cheats
         void LoadCheatScript(const string& filePath);
@@ -46,6 +49,7 @@ class Runner{
         unique_ptr<CheatManager> cheatManager;
         ScriptedEnemyAgent::ScriptType teamAPolicy = ScriptedEnemyAgent::ScriptType::AttackBase;
         ScriptedEnemyAgent::ScriptType teamBPolicy = ScriptedEnemyAgent::ScriptType::AttackBase;
+        unordered_map<int, ScriptedEnemyAgent::ScriptType> tankPolicyMap;
         unordered_map<int, unique_ptr<IAgent>> agentMap;
         void EnsureAgentExists(const Tank& tank);
         unordered_map<int, vector<string>> scheduledCheats;

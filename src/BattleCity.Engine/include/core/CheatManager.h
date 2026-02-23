@@ -18,7 +18,7 @@ struct CheatLogEntry {
 
 class CheatManager {
     public:
-        explicit CheatManager(GameState& gameState);
+        explicit CheatManager(GameState& gameState, std::function<void(int, const std::string&)> onTankSpawnedWithPolicy = {});
 
         bool ExecuteCommand(const string& commandLine);
         int ProcessCommandFile(const string& filePath);
@@ -30,6 +30,7 @@ class CheatManager {
 
     private:
         GameState& gameState;
+        std::function<void(int, const std::string&)> onTankSpawnedWithPolicy;
         using CommandHandler = function<void(const vector<string>&)>;
         unordered_map<string, CommandHandler> commands;
         vector<CheatLogEntry> log;

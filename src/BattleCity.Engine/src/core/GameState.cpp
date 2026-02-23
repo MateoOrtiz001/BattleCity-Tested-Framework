@@ -383,26 +383,33 @@ const Base& GameState::GetBaseByTeam(char team) const {
 
 
 /// CHEATS ////
-void GameState::SpawnTank(int x, int y, char team){
-    if(!IsValidPosition(x,y) || IsBlocked(x,y)) return;
+std::optional<int> GameState::SpawnTank(int x, int y, char team){
+    if(!IsValidPosition(x,y) || IsBlocked(x,y)) return std::nullopt;
     Tank newTank(x,y,team);
+    int newId = newTank.GetId();
     if(team == 'A') {
         teamA_tanks.push_back(newTank);
     } else {
         teamB_tanks.push_back(newTank);
     }
+    return newId;
 }
 
-void GameState::SpawnTanks(int count, char team) {
+std::vector<int> GameState::SpawnTanks(int count, char team) {
     int spawned = 0;
+    std::vector<int> spawnedIds;
+    spawnedIds.reserve(std::max(0, count));
     if (team == 'A') {
         for (int y = 0; y < boardSize && spawned < count; y++){
             for (int x = 0; x < boardSize && spawned < count; x++){
                 if(!IsBlocked(x,y)){
                     if (baseA.GetX() == x && baseA.GetY() == y) continue;
                     if (baseB.GetX() == x && baseB.GetY() == y) continue;
-                    SpawnTank(x,y,team);
-                    spawned++;
+                    auto maybeId = SpawnTank(x,y,team);
+                    if (maybeId.has_value()){
+                        spawnedIds.push_back(*maybeId);
+                        spawned++;
+                    }
                 }
             }
         }
@@ -412,13 +419,16 @@ void GameState::SpawnTanks(int count, char team) {
                 if(!IsBlocked(x,y)){
                     if (baseA.GetX() == x && baseA.GetY() == y) continue;
                     if (baseB.GetX() == x && baseB.GetY() == y) continue;
-                    SpawnTank(x,y,team);
-                    spawned++;
+                    auto maybeId = SpawnTank(x,y,team);
+                    if (maybeId.has_value()){
+                        spawnedIds.push_back(*maybeId);
+                        spawned++;
+                    }
                 }
             }
         }
     }
-    
+    return spawnedIds;
 }
 
 void GameState::RemoveTank(int tankId){

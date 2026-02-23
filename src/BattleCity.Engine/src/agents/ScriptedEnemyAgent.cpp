@@ -2,6 +2,8 @@
 #include "include/core/GameState.h"
 #include "include/utils/Utils.h"
 #include <vector>
+#include <algorithm>
+#include <cctype>
 
 // Deltas por dirección: 0=Norte, 1=Este, 2=Sur, 3=Oeste
 static const int DX[] = { 0, 1, 0, -1 };
@@ -11,6 +13,41 @@ ScriptedEnemyAgent::ScriptedEnemyAgent(char team, ScriptType type, unsigned int 
     : team(team)
     , scriptType(type)
     , rng(seed) {}
+
+std::optional<ScriptedEnemyAgent::ScriptType> ScriptedEnemyAgent::TryParseScriptType(const std::string& value) {
+    std::string normalized = value;
+    std::transform(normalized.begin(), normalized.end(), normalized.begin(),
+        [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
+
+    if (normalized == "attackbase" || normalized == "attack_base" || normalized == "attack-base") {
+        return ScriptType::AttackBase;
+    }
+    if (normalized == "random") {
+        return ScriptType::Random;
+    }
+    if (normalized == "defensive") {
+        return ScriptType::Defensive;
+    }
+    if (normalized == "astarattack" || normalized == "astar_attack" || normalized == "astar-attack") {
+        return ScriptType::AStarAttack;
+    }
+    if (normalized == "interceptor") {
+        return ScriptType::Interceptor;
+    }
+
+    return std::nullopt;
+}
+
+std::string ScriptedEnemyAgent::ScriptTypeToString(ScriptType type) {
+    switch (type) {
+        case ScriptType::AttackBase: return "attack_base";
+        case ScriptType::Random: return "random";
+        case ScriptType::Defensive: return "defensive";
+        case ScriptType::AStarAttack: return "astar_attack";
+        case ScriptType::Interceptor: return "interceptor";
+        default: return "attack_base";
+    }
+}
 
 char ScriptedEnemyAgent::GetTeam() const {
     return team;
@@ -26,6 +63,7 @@ Action ScriptedEnemyAgent::Decide(const GameState& state, int tankId) {
         case ScriptType::Random:    return RandomMove(state, tankId);
         case ScriptType::Defensive: return DefensiveAgent(state, tankId);
         case ScriptType::AStarAttack:     return AStarAttack(state, tankId);
+        case ScriptType::Interceptor: return Interceptor(state, tankId);
         default:                    return Action::Stop();
     }
 }
@@ -202,6 +240,9 @@ Action ScriptedEnemyAgent::Interceptor(const GameState& state, int tankId){
     PathFinder::Target target = PathFinder::FindCheapestTarget(
         state, team, tank->GetX(), tank->GetY(), tank
     );
+
+    (void)target;
+    return Action::Stop();
 }
 
 std::vector<int> ScriptedEnemyAgent::GetLegalDirections(const GameState& state, int tankId) {

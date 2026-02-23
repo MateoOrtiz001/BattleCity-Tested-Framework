@@ -9,6 +9,7 @@
 #include <queue>
 #include <unordered_map>
 #include <functional>
+#include <optional>
 
 class ScriptedEnemyAgent : public IAgent {
 public:
@@ -24,6 +25,9 @@ public:
     /// @param seed Semilla para el generador aleatorio. Usar la misma seed
     ///             produce la misma secuencia de decisiones (reproducibilidad).
     ScriptedEnemyAgent(char team, ScriptType type = ScriptType::AttackBase, unsigned int seed = 0);
+
+    static std::optional<ScriptType> TryParseScriptType(const std::string& value);
+    static std::string ScriptTypeToString(ScriptType type);
 
     Action Decide(const GameState& state, int tankId) override;
 

@@ -3,6 +3,8 @@
 #include <cstring>
 #include <fstream>
 #include <algorithm>
+#include <vector>
+#include <utility>
 
 #include "InputMap.h"
 #include "Render2D.h"
@@ -24,7 +26,10 @@ bool LoadReplayConfig(
 	int& maxFrames,
 	int& tickRate,
 	std::string& levelName,
-	std::string& cheatsPath
+	std::string& cheatsPath,
+	std::string& teamAPolicy,
+	std::string& teamBPolicy,
+	std::vector<std::pair<int, std::string>>& tankPolicySpecs
 ) {
 	std::ifstream file(resultPath);
 	if (!file.is_open()) {
@@ -51,6 +56,23 @@ bool LoadReplayConfig(
 		if (replay.contains("cheats_file") && replay["cheats_file"].is_string()) {
 			cheatsPath = replay["cheats_file"].get<std::string>();
 		}
+		if (replay.contains("team_a_policy") && replay["team_a_policy"].is_string()) {
+			teamAPolicy = replay["team_a_policy"].get<std::string>();
+		}
+		if (replay.contains("team_b_policy") && replay["team_b_policy"].is_string()) {
+			teamBPolicy = replay["team_b_policy"].get<std::string>();
+		}
+		if (replay.contains("tank_policies") && replay["tank_policies"].is_object()) {
+			for (auto it = replay["tank_policies"].begin(); it != replay["tank_policies"].end(); ++it) {
+				if (!it.value().is_string()) continue;
+				try {
+					int tankId = std::stoi(it.key());
+					tankPolicySpecs.emplace_back(tankId, it.value().get<std::string>());
+				} catch (...) {
+					// Ignore malformed tank id keys in replay JSON
+				}
+			}
+		}
 	}
 	catch (const std::exception& ex) {
 		std::cerr << "[GUI] Error: Invalid result JSON in " << resultPath << ": " << ex.what() << std::endl;
@@ -58,6 +80,23 @@ bool LoadReplayConfig(
 	}
 
 	return true;
+}
+
+static bool ParseTankPolicySpec(const std::string& spec, int& tankId, std::string& policyName) {
+	auto sep = spec.find(':');
+	if (sep == std::string::npos || sep == 0 || sep == spec.size() - 1) {
+		return false;
+	}
+
+	try {
+		tankId = std::stoi(spec.substr(0, sep));
+	}
+	catch (...) {
+		return false;
+	}
+
+	policyName = spec.substr(sep + 1);
+	return !policyName.empty();
 }
 
 std::vector<std::string> GetLevelByName(const std::string& name) {
@@ -78,13 +117,16 @@ int main(int argc, char* argv[]) {
     std::string cheatsPath = "";
     int tickRate  = 10;  
 	std::string resultPath = "";
+	std::string teamAPolicy = "attack_base";
+	std::string teamBPolicy = "attack_base";
+	std::vector<std::pair<int, std::string>> tankPolicySpecs;
 
 	for (int i = 1; i < argc; i++) {
 		std::string arg = argv[i];
 		if (arg == "--result" && i + 1 < argc) resultPath = argv[++i];
 	}
 
-	if (!resultPath.empty() && !LoadReplayConfig(resultPath, seed, maxFrames, tickRate, levelName, cheatsPath)) {
+	if (!resultPath.empty() && !LoadReplayConfig(resultPath, seed, maxFrames, tickRate, levelName, cheatsPath, teamAPolicy, teamBPolicy, tankPolicySpecs)) {
 		return 1;
 	}
 
@@ -95,6 +137,17 @@ int main(int argc, char* argv[]) {
         if (arg == "--level"     && i+1 < argc) levelName  = argv[++i];
         if (arg == "--cheats"    && i+1 < argc) cheatsPath = argv[++i];
         if (arg == "--tickRate"  && i+1 < argc) tickRate   = std::stoi(argv[++i]);
+		if (arg == "--teamAPolicy" && i+1 < argc) teamAPolicy = argv[++i];
+		if (arg == "--teamBPolicy" && i+1 < argc) teamBPolicy = argv[++i];
+		if (arg == "--tankPolicy"  && i+1 < argc) {
+			int tankId = -1;
+			std::string policyName;
+			if (!ParseTankPolicySpec(argv[++i], tankId, policyName)) {
+				std::cerr << "[GUI] Invalid --tankPolicy format. Expected <tankId>:<agentType>." << std::endl;
+				return 1;
+			}
+			tankPolicySpecs.emplace_back(tankId, policyName);
+		}
     }
 
 	tickRate = std::max(1, tickRate);
@@ -104,12 +157,28 @@ int main(int argc, char* argv[]) {
 			  << ", level=" << levelName
 			  << ", tickRate=" << tickRate
 			  << ", maxFrames=" << maxFrames
+			  << ", teamAPolicy=" << teamAPolicy
+			  << ", teamBPolicy=" << teamBPolicy
 			  << ", cheats=" << (cheatsPath.empty() ? "(none)" : cheatsPath)
 			  << std::endl;
 
 	Runner runner;
 	runner.MatchConfig(tickRate, maxFrames, seed);
 	runner.SetLevelName(levelName);
+	if (!runner.SetTeamPolicyByName('A', teamAPolicy)) {
+		std::cerr << "[GUI] Invalid --teamAPolicy value: " << teamAPolicy << std::endl;
+		return 1;
+	}
+	if (!runner.SetTeamPolicyByName('B', teamBPolicy)) {
+		std::cerr << "[GUI] Invalid --teamBPolicy value: " << teamBPolicy << std::endl;
+		return 1;
+	}
+	for (const auto& [tankId, policyName] : tankPolicySpecs) {
+		if (!runner.SetTankPolicyByName(tankId, policyName)) {
+			std::cerr << "[GUI] Invalid --tankPolicy agent type for tank " << tankId << ": " << policyName << std::endl;
+			return 1;
+		}
+	}
 	if (!cheatsPath.empty()) {
 		runner.LoadCheatScript(cheatsPath);
 	}

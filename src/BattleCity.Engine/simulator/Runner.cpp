@@ -1,6 +1,8 @@
 #include "Runner.h"
 #include "external/json.hpp"
 #include "fstream"
+#include <sstream>
+#include <stdexcept>
 
 using json = nlohmann::json;
 
@@ -17,7 +19,13 @@ void Runner::MatchConfig(int ticks, int maxFrames, unsigned int seed) {
 void Runner::StartMatch(const vector<string>& layout) {
     agentMap.clear();
     gameState.Initialize(layout, maxFrames);
-    cheatManager = std::make_unique<CheatManager>(gameState);
+    cheatManager = std::make_unique<CheatManager>(gameState,
+        [this](int tankId, const std::string& policyName) {
+            if (!SetTankPolicyByName(tankId, policyName)) {
+                throw std::invalid_argument("Invalid agent type: " + policyName);
+            }
+        }
+    );
 
     std::cout << "[Runner] Starting match with seed: " << seed << std::endl;
 }
@@ -91,6 +99,13 @@ void Runner::MatchResults(const std::string& filename, bool consoleLog) const {
     result["max_frames"] = maxFrames;
     result["level"] = levelName;
     result["cheats_file"] = cheatScriptPath;
+    result["team_a_policy"] = ScriptedEnemyAgent::ScriptTypeToString(teamAPolicy);
+    result["team_b_policy"] = ScriptedEnemyAgent::ScriptTypeToString(teamBPolicy);
+    json tankPolicies = json::object();
+    for (const auto& [tankId, policy] : tankPolicyMap) {
+        tankPolicies[std::to_string(tankId)] = ScriptedEnemyAgent::ScriptTypeToString(policy);
+    }
+    result["tank_policies"] = tankPolicies;
     result["frames"] = frames;
     result["score"] = score;
     result["winner"] = (winner == ' ') ? "Draw" : std::string(1, winner);
@@ -140,12 +155,44 @@ void Runner::SetTeamPolicy(char team, ScriptedEnemyAgent::ScriptType policy){
     }
 }
 
+void Runner::SetTankPolicy(int tankId, ScriptedEnemyAgent::ScriptType policy){
+    tankPolicyMap[tankId] = policy;
+
+    auto it = agentMap.find(tankId);
+    if (it != agentMap.end()) {
+        Tank* tank = gameState.GetTankById(tankId);
+        if (tank) {
+            char team = tank->GetTeam();
+            unsigned int tankSeed = seed ^ (static_cast<unsigned int>(tankId) * 2654435761u);
+            it->second = std::make_unique<ScriptedEnemyAgent>(team, policy, tankSeed);
+        }
+    }
+}
+
+bool Runner::SetTeamPolicyByName(char team, const std::string& policyName) {
+    auto maybePolicy = ScriptedEnemyAgent::TryParseScriptType(policyName);
+    if (!maybePolicy.has_value()) return false;
+    SetTeamPolicy(team, *maybePolicy);
+    return true;
+}
+
+bool Runner::SetTankPolicyByName(int tankId, const std::string& policyName) {
+    auto maybePolicy = ScriptedEnemyAgent::TryParseScriptType(policyName);
+    if (!maybePolicy.has_value()) return false;
+    SetTankPolicy(tankId, *maybePolicy);
+    return true;
+}
+
 void Runner::EnsureAgentExists(const Tank& tank){
     int id = tank.GetId();
     if (agentMap.count(id) != 0) return;
 
     char team = tank.GetTeam();
     ScriptedEnemyAgent::ScriptType policy = (team == 'A') ? teamAPolicy : teamBPolicy;
+    auto perTankPolicy = tankPolicyMap.find(id);
+    if (perTankPolicy != tankPolicyMap.end()) {
+        policy = perTankPolicy->second;
+    }
 
     unsigned int tankSeed = seed ^ (static_cast<unsigned int>(id) * 2654435761u); // Mezcla la seed con el ID del tanque para diversidad
     agentMap[id] = std::make_unique<ScriptedEnemyAgent>(team, policy, tankSeed);

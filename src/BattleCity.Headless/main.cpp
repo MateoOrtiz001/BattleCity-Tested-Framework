@@ -7,8 +7,26 @@
 #include <iostream>
 #include <cstring>
 #include <random>
+#include <vector>
+#include <utility>
 
 using namespace std;
+
+static bool ParseTankPolicySpec(const std::string& spec, int& tankId, std::string& policyName) {
+    auto sep = spec.find(':');
+    if (sep == std::string::npos || sep == 0 || sep == spec.size() - 1) {
+        return false;
+    }
+
+    try {
+        tankId = std::stoi(spec.substr(0, sep));
+    } catch (...) {
+        return false;
+    }
+
+    policyName = spec.substr(sep + 1);
+    return !policyName.empty();
+}
 
 int main(int argc, char* argv[]){
     unsigned int seed = random_device{}();
@@ -17,6 +35,9 @@ int main(int argc, char* argv[]){
     string outputFile = "results/result"+to_string(seed)+".json";
     string cheatFile = "";
     string level = "level1";
+    string teamAPolicy = "attack_base";
+    string teamBPolicy = "attack_base";
+    vector<pair<int, string>> tankPolicySpecs;
 
     for (int i = 1; i < argc; i++){
         if (strcmp(argv[i], "--seed") == 0){
@@ -43,6 +64,24 @@ int main(int argc, char* argv[]){
             if (i + 1 >= argc) { cerr << "[Headless] Missing value for --level" << endl; return 1; }
             level = argv[i+1];
             i++;
+        }else if (strcmp(argv[i], "--teamAPolicy") == 0){
+            if (i + 1 >= argc) { cerr << "[Headless] Missing value for --teamAPolicy" << endl; return 1; }
+            teamAPolicy = argv[i+1];
+            i++;
+        }else if (strcmp(argv[i], "--teamBPolicy") == 0){
+            if (i + 1 >= argc) { cerr << "[Headless] Missing value for --teamBPolicy" << endl; return 1; }
+            teamBPolicy = argv[i+1];
+            i++;
+        }else if (strcmp(argv[i], "--tankPolicy") == 0){
+            if (i + 1 >= argc) { cerr << "[Headless] Missing value for --tankPolicy" << endl; return 1; }
+            int tankId = -1;
+            string policyName;
+            if (!ParseTankPolicySpec(argv[i+1], tankId, policyName)) {
+                cerr << "[Headless] Invalid --tankPolicy format: " << argv[i+1] << ". Expected <tankId>:<agentType>." << endl;
+                return 1;
+            }
+            tankPolicySpecs.emplace_back(tankId, policyName);
+            i++;
         }
     }
     cout << "[Headless] Starting a match" << endl;
@@ -51,6 +90,20 @@ int main(int argc, char* argv[]){
     Runner runner;
     runner.MatchConfig(tickRate, maxFrames, seed);
     runner.SetLevelName(level);
+    if (!runner.SetTeamPolicyByName('A', teamAPolicy)) {
+        cerr << "[Headless] Invalid value for --teamAPolicy: " << teamAPolicy << endl;
+        return 1;
+    }
+    if (!runner.SetTeamPolicyByName('B', teamBPolicy)) {
+        cerr << "[Headless] Invalid value for --teamBPolicy: " << teamBPolicy << endl;
+        return 1;
+    }
+    for (const auto& [tankId, policyName] : tankPolicySpecs) {
+        if (!runner.SetTankPolicyByName(tankId, policyName)) {
+            cerr << "[Headless] Invalid --tankPolicy agent type for tank " << tankId << ": " << policyName << endl;
+            return 1;
+        }
+    }
     if(!cheatFile.empty()){
         runner.LoadCheatScript(cheatFile);
         cout << "[HeadLess] Cheat script loaded: " << cheatFile << endl;

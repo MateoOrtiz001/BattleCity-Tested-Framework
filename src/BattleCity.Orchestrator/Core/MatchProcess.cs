@@ -31,6 +31,9 @@ namespace BattleCity.Orchestrator.Core
         /// <summary>Argumentos extra que se pasan tal cual al proceso.</summary>
         public Dictionary<string, string> ExtraArguments { get; set; } = new();
 
+        /// <summary>Overrides por tanque en formato tankId:agentType.</summary>
+        public List<string> TankPolicySpecs { get; set; } = new();
+
         /// <summary>Identificador legible de esta partida (para logs).</summary>
         public string MatchId { get; set; } = Guid.NewGuid().ToString("N")[..8];
 
@@ -45,6 +48,7 @@ namespace BattleCity.Orchestrator.Core
                 CheatsFilePath = CheatsFilePath,
                 ProcessTimeout = ProcessTimeout,
                 ExtraArguments = new Dictionary<string, string>(ExtraArguments),
+                TankPolicySpecs = new List<string>(TankPolicySpecs),
                 MatchId = MatchId
             };
         }
@@ -231,6 +235,11 @@ namespace BattleCity.Orchestrator.Core
             foreach (var kvp in config.ExtraArguments)
             {
                 args.Add($"--{kvp.Key} \"{kvp.Value}\"");
+            }
+
+            foreach (var spec in config.TankPolicySpecs)
+            {
+                args.Add($"--tankPolicy \"{spec}\"");
             }
 
             return string.Join(" ", args);
